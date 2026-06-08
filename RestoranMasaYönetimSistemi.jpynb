@@ -108,7 +108,7 @@ class RestoranSistemi:
     def __init__(self):
         self.masalar = []
         self.menu = []
-        self.garsonlar = [Garson("Ahmet", "Yılmaz", 101), Garson("Ayşe", "Kaya", 102)] # Örnek garsonlar
+        self.garsonlar = [Garson("Azra", "Yılmaz", 101), Garson("Baran", "Taşcı", 102)] # Örnek garsonlar
         self.gunluk_satis = 0.0
 
     def calistir(self):

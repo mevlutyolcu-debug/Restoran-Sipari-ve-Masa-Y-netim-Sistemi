@@ -1,0 +1,284 @@
+import json
+import os
+from abc import ABC, abstractmethod
+
+# ==========================================
+# 1. ABSTRACTION (Soyutlama) & INHERITANCE (Kalıtım)
+# ==========================================
+# Temel sınıf (Abstract Class). Doğrudan nesnesi oluşturulmaz, diğer sınıflara şablon olur.
+class Calisan(ABC):
+    def __init__(self, ad, soyad):
+        self.ad = ad
+        self.soyad = soyad
+
+    @abstractmethod
+    def calisan_bilgisi(self):
+        pass
+
+# Calisan sınıfından kalıtım (Inheritance) alıyoruz.
+class Garson(Calisan):
+    def __init__(self, ad, soyad, garson_id):
+        super().__init__(ad, soyad)  # Üst sınıfın constructor'ını (yapıcısını) çağırıyoruz
+        self.garson_id = garson_id
+
+    # POLYMORPHISM (Çok Biçimlilik): Üst sınıftaki metodu kendi ihtiyacımıza göre eziyoruz (Override).
+    def calisan_bilgisi(self):
+        return f"Garson: {self.ad} {self.soyad} (ID: {self.garson_id})"
+
+
+# ==========================================
+# 2. ENCAPSULATION (Kapsülleme)
+# ==========================================
+class MenuUrunu:
+    def __init__(self, urun_id, ad, fiyat):
+        self.urun_id = urun_id
+        self.ad = ad
+        self.__fiyat = fiyat  # Kapsülleme: '__' ile gizli (private) değişken yaptık.
+
+    # Getter metodu
+    @property
+    def fiyat(self):
+        return self.__fiyat
+
+    # Setter metodu: Fiyatın negatif girilmesini engelliyoruz.
+    @fiyat.setter
+    def fiyat(self, yeni_fiyat):
+        if yeni_fiyat > 0:
+            self.__fiyat = yeni_fiyat
+        else:
+            raise ValueError("Fiyat 0'dan büyük olmalıdır!")
+
+    # Nesne yazdırıldığında anlamlı bir metin dönmesi için (Polymorphism / Magic Method override)
+    def __str__(self):
+        return f"[{self.urun_id}] {self.ad} - {self.__fiyat} TL"
+
+
+# ==========================================
+# 3. CLASS (Sınıf) ve COMPOSITION (Bileşim)
+# ==========================================
+class Siparis:
+    def __init__(self):
+        # Liste ve Sözlük kullanımı
+        self.urunler = [] 
+
+    def urun_ekle(self, urun, adet):
+        self.urunler.append({"urun": urun, "adet": adet})
+
+    def toplam_hesapla(self):
+        toplam = 0
+        for kalem in self.urunler:
+            toplam += kalem["urun"].fiyat * kalem["adet"]
+        return toplam
+
+    def detay_goster(self):
+        if not self.urunler:
+            return "Henüz sipariş girilmemiş."
+        detay = ""
+        for kalem in self.urunler:
+            detay += f"- {kalem['urun'].ad} (x{kalem['adet']}) : {kalem['urun'].fiyat * kalem['adet']} TL\n"
+        return detay
+
+
+class Masa:
+    def __init__(self, masa_no, garson=None):
+        self.masa_no = masa_no
+        self.garson = garson
+        self.__durum = "Boş"  # Kapsülleme
+        self.siparis = Siparis()  # Masa oluşturulduğunda boş bir sipariş nesnesi atanır
+
+    @property
+    def durum(self):
+        return self.__durum
+
+    def siparis_ekle(self, urun, adet):
+        self.siparis.urun_ekle(urun, adet)
+        self.__durum = "Dolu"  # Sipariş eklendiğinde masa otomatik Dolu olur
+
+    def hesap_kapat(self):
+        tutar = self.siparis.toplam_hesapla()
+        self.__durum = "Boş"
+        self.siparis = Siparis()  # Hesap kapanınca siparişler sıfırlanır
+        return tutar
+
+
+# ==========================================
+# 4. ANA KONTROL SINIFI (Restoran Sistemi)
+# ==========================================
+class RestoranSistemi:
+    def __init__(self):
+        self.masalar = []
+        self.menu = []
+        self.garsonlar = [Garson("Ahmet", "Yılmaz", 101), Garson("Ayşe", "Kaya", 102)] # Örnek garsonlar
+        self.gunluk_satis = 0.0
+
+    def calistir(self):
+        while True:
+            print("\n" + "="*35)
+            print(" RESTORAN SİPARİŞ VE MASA SİSTEMİ")
+            print("="*35)
+            print("1- Masa ekle")
+            print("2- Menü ürünü ekle")
+            print("3- Menü listele")
+            print("4- Masaya sipariş ekle")
+            print("5- Masa hesabını görüntüle")
+            print("6- Masa hesabını kapat")
+            print("7- Günlük satış raporu")
+            print("8- Masaları listele")
+            print("9- Verileri kaydet")
+            print("10- Verileri yükle")
+            print("11- Çıkış")
+            print("="*35)
+            
+            try:
+                secim = int(input("Lütfen bir işlem seçiniz (1-11): "))
+                self.islem_yap(secim)
+            except ValueError:
+                print("\nHATA: Lütfen sadece sayısal bir değer giriniz!")
+
+    def islem_yap(self, secim):
+        if secim == 1:
+            try:
+                masa_no = int(input("Eklenecek Masa No: "))
+                if any(m.masa_no == masa_no for m in self.masalar):
+                    print("Bu masa numarası zaten mevcut!")
+                else:
+                    # Rastgele bir garson atıyoruz
+                    atanan_garson = self.garsonlar[masa_no % len(self.garsonlar)]
+                    yeni_masa = Masa(masa_no, atanan_garson)
+                    self.masalar.append(yeni_masa)
+                    print(f"Masa {masa_no} eklendi. İlgilenen {atanan_garson.calisan_bilgisi()}")
+            except ValueError:
+                print("Geçersiz masa numarası!")
+
+        elif secim == 2:
+            try:
+                uid = int(input("Ürün ID: "))
+                ad = input("Ürün Adı: ")
+                fiyat = float(input("Fiyatı (TL): "))
+                yeni_urun = MenuUrunu(uid, ad, fiyat)
+                self.menu.append(yeni_urun)
+                print(f"{ad} menüye başarıyla eklendi.")
+            except ValueError as e:
+                print(f"Giriş hatası! Sayısal değer girmelisiniz. Detay: {e}")
+
+        elif secim == 3:
+            print("\n--- MENÜ ---")
+            if not self.menu:
+                print("Menüde henüz ürün yok.")
+            for urun in self.menu:
+                print(urun)
+
+        elif secim == 4:
+            try:
+                masa_no = int(input("Sipariş girilecek Masa No: "))
+                masa = next((m for m in self.masalar if m.masa_no == masa_no), None)
+                if not masa:
+                    print("Masa bulunamadı!")
+                    return
+                
+                uid = int(input("Eklenecek Ürün ID: "))
+                urun = next((u for u in self.menu if u.urun_id == uid), None)
+                if not urun:
+                    print("Bu ID'ye sahip ürün menüde yok!")
+                    return
+                
+                adet = int(input("Kaç adet: "))
+                masa.siparis_ekle(urun, adet)
+                print(f"Masa {masa.masa_no}'ya {adet} adet {urun.ad} eklendi.")
+            except ValueError:
+                print("Geçersiz giriş!")
+
+        elif secim == 5:
+            try:
+                masa_no = int(input("Hesabı görüntülenecek Masa No: "))
+                masa = next((m for m in self.masalar if m.masa_no == masa_no), None)
+                if masa:
+                    print(f"\n--- Masa {masa.masa_no} Hesabı ---")
+                    print(masa.siparis.detay_goster())
+                    print(f"Ara Toplam: {masa.siparis.toplam_hesapla()} TL")
+                else:
+                    print("Masa bulunamadı!")
+            except ValueError:
+                print("Geçersiz giriş!")
+
+        elif secim == 6:
+            try:
+                masa_no = int(input("Hesabı kapatılacak Masa No: "))
+                masa = next((m for m in self.masalar if m.masa_no == masa_no), None)
+                if masa and masa.durum == "Dolu":
+                    hesap = masa.hesap_kapat()
+                    self.gunluk_satis += hesap
+                    print(f"Masa {masa.masa_no} hesabı kapatıldı. Ödenen Tutar: {hesap} TL")
+                elif masa and masa.durum == "Boş":
+                    print("Bu masanın hesabı zaten boş!")
+                else:
+                    print("Masa bulunamadı!")
+            except ValueError:
+                print("Geçersiz giriş!")
+
+        elif secim == 7:
+            print(f"\nGünlük Toplam Satış: {self.gunluk_satis} TL")
+
+        elif secim == 8:
+            print("\n--- MASALAR ---")
+            if not self.masalar:
+                print("Sistemde masa bulunmuyor.")
+            for m in self.masalar:
+                print(f"Masa No: {m.masa_no} | Durum: {m.durum} | {m.garson.calisan_bilgisi() if m.garson else ''}")
+
+        elif secim == 9:
+            self.verileri_kaydet()
+
+        elif secim == 10:
+            self.verileri_yukle()
+
+        elif secim == 11:
+            print("Sistemden çıkılıyor. İyi günler!")
+            exit()
+        else:
+            print("Lütfen 1 ile 11 arasında bir seçim yapınız.")
+
+    # DOSYA İŞLEMLERİ (Veri Kaydetme)
+    def verileri_kaydet(self):
+        try:
+            veri = {
+                "gunluk_satis": self.gunluk_satis,
+                "menu": [{"urun_id": u.urun_id, "ad": u.ad, "fiyat": u.fiyat} for u in self.menu],
+                "masalar": [{"masa_no": m.masa_no, "durum": m.durum} for m in self.masalar]
+            }
+            with open("restoran_veri.json", "w", encoding="utf-8") as dosya:
+                json.dump(veri, dosya, ensure_ascii=False, indent=4)
+            print("Veriler 'restoran_veri.json' dosyasına başarıyla kaydedildi.")
+        except Exception as e:
+            print(f"Veri kaydedilirken hata oluştu: {e}")
+
+    # DOSYA İŞLEMLERİ (Veri Yükleme)
+    def verileri_yukle(self):
+        try:
+            if os.path.exists("restoran_veri.json"):
+                with open("restoran_veri.json", "r", encoding="utf-8") as dosya:
+                    veri = json.load(dosya)
+                
+                self.gunluk_satis = veri.get("gunluk_satis", 0.0)
+                
+                self.menu = []
+                for u in veri.get("menu", []):
+                    self.menu.append(MenuUrunu(u["urun_id"], u["ad"], u["fiyat"]))
+                
+                self.masalar = []
+                for m in veri.get("masalar", []):
+                    yeni_masa = Masa(m["masa_no"])
+                    # Private durum değişkenini manuel atamak için (sadece yükleme amaçlı bypass)
+                    yeni_masa._Masa__durum = m["durum"] 
+                    self.masalar.append(yeni_masa)
+                    
+                print("Veriler dosyadan başarıyla yüklendi.")
+            else:
+                print("Kayıtlı veri dosyası bulunamadı!")
+        except Exception as e:
+            print(f"Veri yüklenirken hata oluştu: {e}")
+
+# Uygulamayı Başlatma
+if __name__ == "__main__":
+    sistem = RestoranSistemi()
+    sistem.calistir()

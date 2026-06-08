@@ -2,9 +2,9 @@ import json
 import os
 from abc import ABC, abstractmethod
 
-# ==========================================
+
 # 1. ABSTRACTION (Soyutlama) & INHERITANCE (Kalıtım)
-# ==========================================
+
 # Temel sınıf (Abstract Class). Doğrudan nesnesi oluşturulmaz, diğer sınıflara şablon olur.
 class Calisan(ABC):
     def __init__(self, ad, soyad):
@@ -26,9 +26,9 @@ class Garson(Calisan):
         return f"Garson: {self.ad} {self.soyad} (ID: {self.garson_id})"
 
 
-# ==========================================
+
 # 2. ENCAPSULATION (Kapsülleme)
-# ==========================================
+
 class MenuUrunu:
     def __init__(self, urun_id, ad, fiyat):
         self.urun_id = urun_id
@@ -53,9 +53,9 @@ class MenuUrunu:
         return f"[{self.urun_id}] {self.ad} - {self.__fiyat} TL"
 
 
-# ==========================================
+
 # 3. CLASS (Sınıf) ve COMPOSITION (Bileşim)
-# ==========================================
+
 class Siparis:
     def __init__(self):
         # Liste ve Sözlük kullanımı
@@ -101,9 +101,9 @@ class Masa:
         return tutar
 
 
-# ==========================================
+
 # 4. ANA KONTROL SINIFI (Restoran Sistemi)
-# ==========================================
+
 class RestoranSistemi:
     def __init__(self):
         self.masalar = []
